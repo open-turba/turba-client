@@ -111,6 +111,41 @@ print(df[["crop_name", "target_yield_level", "N_kg_ha", "P_kg_ha", "K_kg_ha"]])
 0      Wheat (Rainfed)    medium    ...      ...      ...
 ```
 
+### Generic-formula products and estimated cost
+
+Recommendation rows also include the fertilizer products shown by Fertimap's
+generic-formula block:
+
+```python
+row = df.iloc[0]
+
+for application in row["generic_formula_applications"]:
+    print(
+        application["quantity"],
+        application["quantity_unit"],
+        application["product_name"],
+        application["application_role"],
+    )
+
+print(
+    row["generic_formula_cost_amount"],
+    row["generic_formula_cost_currency"],
+    "per",
+    row["generic_formula_cost_basis"],
+)
+```
+
+Each application preserves its original upstream text in `raw_text`. Known
+application roles are normalized to `base` and `top_dressing`, while the
+original French role remains available in `application_role_raw`. Quantities
+reported as `q/ha` or `qx/ha` are normalized to `qx/ha` (quintals per hectare).
+
+The cost is an upstream Fertimap estimate, not a live supplier quote. Fertimap
+does not provide a price date, supplier, or pricing methodology in this
+response. The upstream `dh` currency label is normalized to `MAD`. These fields
+provide structured inputs for downstream economic analysis; they do not yet
+optimize fertilizer choices against current market prices.
+
 ---
 
 # User Workflow

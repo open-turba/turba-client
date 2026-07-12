@@ -115,8 +115,109 @@ def parse_crop_rules(html: str) -> dict[int, CropRule]:
     return crop_rules
 
 
-def parse_calcul_response(html: str) -> dict[str, float | None]:
-    """Parse calculator HTML and return N, P, K recommendation values."""
+def _parse_generic_formula_application(text: str) -> dict[str, object]:
+    """Parse one generic-formula application while preserving its source text."""
+    raw_text = " ".join(text.split())
+    application: dict[str, object] = {
+        "quantity": None,
+        "quantity_unit": None,
+        "product_name": None,
+        "application_role": None,
+        "application_role_raw": None,
+        "raw_text": raw_text,
+    }
+
+    quantity_match = re.match(
+        r"^(?P<quantity>\d+(?:[.,]\d+)?)\s*"
+        r"(?P<unit>qx?/ha)\s+"
+        r"(?:(?:du|de\s+la|de\s+l['’]|d['’]|de)\s*)?"
+        r"(?P<body>.+)$",
+        raw_text,
+        flags=re.IGNORECASE,
+    )
+    if quantity_match is None:
+        return application
+
+    application["quantity"] = to_float(quantity_match.group("quantity"))
+    application["quantity_unit"] = "qx/ha"
+
+    body = quantity_match.group("body").strip()
+    role_match = re.search(r"\s+comme\s+(?P<role>.+?)\s*$", body, flags=re.IGNORECASE)
+    if role_match is None:
+        application["product_name"] = body or None
+        return application
+
+    product_name = body[: role_match.start()].strip()
+    role_raw = role_match.group("role").strip()
+    role_text = role_raw.casefold()
+
+    application["product_name"] = product_name or None
+    application["application_role_raw"] = role_raw or None
+    if "fond" in role_text:
+        application["application_role"] = "base"
+    elif "couverture" in role_text:
+        application["application_role"] = "top_dressing"
+
+    return application
+
+
+def _parse_generic_formula(soup: BeautifulSoup) -> dict[str, object]:
+    """Extract the optional generic-formula block from a calculator response."""
+    applications: list[dict[str, object]] = []
+    cost_amount = None
+    cost_currency = None
+    cost_basis = None
+    cost_raw = None
+
+    heading = None
+    for candidate in soup.find_all(["b", "strong"]):
+        heading_text = " ".join(candidate.stripped_strings).casefold()
+        if "recommandations" in heading_text and "formules" in heading_text:
+            heading = candidate
+            break
+
+    if heading is None:
+        return {
+            "generic_formula_applications": applications,
+            "generic_formula_cost_amount": cost_amount,
+            "generic_formula_cost_currency": cost_currency,
+            "generic_formula_cost_basis": cost_basis,
+            "generic_formula_cost_raw": cost_raw,
+        }
+
+    container = heading.find_parent("td") or heading.parent
+    application_list = heading.find_next("ul")
+    if application_list is not None and application_list.find_parent("td") is container:
+        applications = [
+            _parse_generic_formula_application(item.get_text(" ", strip=True))
+            for item in application_list.find_all("li", recursive=False)
+        ]
+
+    container_text = " ".join(container.stripped_strings)
+    cost_match = re.search(
+        r"(?P<raw>(?:pour\s+un\s+)?co[^\s]{0,8}t\s+de\s+"
+        r"(?P<amount>\d+(?:[.,]\d+)?)\s*"
+        r"(?P<currency>dh|mad)\s*/\s*(?P<basis>ha))",
+        container_text,
+        flags=re.IGNORECASE,
+    )
+    if cost_match is not None:
+        cost_amount = to_float(cost_match.group("amount"))
+        cost_currency = "MAD"
+        cost_basis = cost_match.group("basis").lower()
+        cost_raw = cost_match.group("raw")
+
+    return {
+        "generic_formula_applications": applications,
+        "generic_formula_cost_amount": cost_amount,
+        "generic_formula_cost_currency": cost_currency,
+        "generic_formula_cost_basis": cost_basis,
+        "generic_formula_cost_raw": cost_raw,
+    }
+
+
+def parse_calcul_response(html: str) -> dict[str, object]:
+    """Parse calculator HTML and return nutrient and generic-formula recommendations."""
     soup = BeautifulSoup(maybe_fix_mojibake(html), "html.parser")
 
     n_kg_ha = None
@@ -180,4 +281,5 @@ def parse_calcul_response(html: str) -> dict[str, float | None]:
         "N_kg_ha": n_kg_ha,
         "P_kg_ha": p_kg_ha,
         "K_kg_ha": k_kg_ha,
+        **_parse_generic_formula(soup),
     }

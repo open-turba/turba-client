@@ -24,6 +24,8 @@ def test_get_recommendations_for_all_crops(client) -> None:
     assert set(df["crop_name"]) == {"Wheat (Rainfed)", "Barley (Rainfed)"}
     assert set(df["target_yield_level"]) == {"medium"}
     assert set(df["N_kg_ha"]) == {120.0}
+    assert all(len(items) == 3 for items in df["generic_formula_applications"])
+    assert set(df["generic_formula_cost_amount"]) == {787.45}
 
 
 def test_get_recommendations_accepts_multiple_levels(client) -> None:
@@ -73,6 +75,8 @@ def test_get_recommendations_for_single_crop_with_override(client) -> None:
     assert row["target_yield_level"] == "high"
     assert row["target_yield_value"] == 50
     assert row["p_assimilable_mgkg_p2o5"] == 55
+    assert row["generic_formula_applications"][2]["product_name"] == "Ammonitrates"
+    assert row["generic_formula_cost_currency"] == "MAD"
 
 
 def test_get_recommendations_rejects_unknown_crop(client) -> None:

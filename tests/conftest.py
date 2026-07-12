@@ -56,9 +56,24 @@ CALCUL_HTML = """
 <html>
   <body>
     <table>
-      <tr><th>kg N/ha</th><td>120</td></tr>
-      <tr><th>kg P/ha</th><td>45</td></tr>
-      <tr><th>kg K/ha</th><td>30</td></tr>
+      <tr>
+        <td>
+          <table>
+            <tr><th>kg N/ha</th><td>120</td></tr>
+            <tr><th>kg P/ha</th><td>45</td></tr>
+            <tr><th>kg K/ha</th><td>30</td></tr>
+          </table>
+        </td>
+        <td>
+          <p><b>Recommandations basÃ©es sur les formules gÃ©nÃ©riques :</b></p>
+          <ul>
+            <li>0.85qx/ha du NPK(16.11.20) comme engrais de fond</li>
+            <li>0.55qx/ha du TSP comme engrais de fond</li>
+            <li>2.13qx/ha d'Ammonitrates comme engrais de couverture</li>
+          </ul>
+          <br />pour un cout de 787.45 dh/ha
+        </td>
+      </tr>
     </table>
   </body>
 </html>
