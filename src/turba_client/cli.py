@@ -83,17 +83,30 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _prepare_csv_output(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Return a copy with nested cells serialized as valid JSON for CSV output."""
+    prepared = dataframe.copy()
+    for column in prepared.columns:
+        if prepared[column].map(lambda value: isinstance(value, (dict, list))).any():
+            prepared[column] = prepared[column].map(
+                lambda value: json.dumps(value, ensure_ascii=False)
+                if isinstance(value, (dict, list))
+                else value
+            )
+    return prepared
+
+
 def _write_output(dataframe: pd.DataFrame, output_path: str | None, stdout_format: str) -> None:
     if output_path:
         output = Path(output_path)
         if output.suffix.lower() == ".json":
             output.write_text(dataframe.to_json(orient="records", indent=2), encoding="utf-8")
         else:
-            dataframe.to_csv(output, index=False)
+            _prepare_csv_output(dataframe).to_csv(output, index=False)
         return
 
     if stdout_format == "csv":
-        print(dataframe.to_csv(index=False), end="")
+        print(_prepare_csv_output(dataframe).to_csv(index=False), end="")
     else:
         print(json.dumps(dataframe.to_dict(orient="records"), indent=2, default=str))
 

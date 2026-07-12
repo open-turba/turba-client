@@ -406,4 +406,9 @@ class TurbaClient:
             "N_kg_ha": rec["N_kg_ha"],
             "P_kg_ha": rec["P_kg_ha"],
             "K_kg_ha": rec["K_kg_ha"],
+            "generic_formula_applications": rec["generic_formula_applications"],
+            "generic_formula_cost_amount": rec["generic_formula_cost_amount"],
+            "generic_formula_cost_currency": rec["generic_formula_cost_currency"],
+            "generic_formula_cost_basis": rec["generic_formula_cost_basis"],
+            "generic_formula_cost_raw": rec["generic_formula_cost_raw"],
         }
