@@ -24,6 +24,11 @@
     <img src="https://static.pepy.tech/badge/turba-client" alt="Downloads" />
   </a>
 
+  <!-- arXiv -->
+  <a href="https://arxiv.org/abs/2610.05949">
+    <img src="https://img.shields.io/badge/arXiv-2610.05949-b31b1b.svg" alt="arXiv" />
+  </a>
+
   <!-- License -->
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
